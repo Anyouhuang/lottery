@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CSMMT 2026 晚宴摸彩</title>
+<title>摸彩抽獎</title>
 <style>
 :root{--bg:#0a0f1f;--bg2:#141b33;--tile:#172040;--line:#2f3b66;--fg:#f7f8fc;--muted:#a9b2d0;--accent:#ffd166;--good:#5eead4;--bad:#ff5a5a;--info:#7cb4ff}
 *{box-sizing:border-box}
@@ -132,12 +132,12 @@ table.l td.n{font-weight:800;font-size:17px;color:var(--accent)}
 <!-- ================= 設定頁 ================= -->
 <div id="setup" class="screen active">
  <div class="wrap">
-  <h1>CSMMT 2026 晚宴摸彩｜設定</h1>
+  <h1>摸彩抽獎｜設定</h1>
   <p class="sub">完全離線。設定與結果會存在這台電腦的瀏覽器裡；要換電腦請先「匯出備份」再到另一台「匯入備份」。　<button id="helpBtn2" class="sm">第一次用？看使用教學</button></p>
 
   <div class="card">
-   <h2>1. 號碼來源（名牌流水號）</h2>
-   <p class="note">全部報名者的號碼都放進號碼池。沒到場的人不用事先排除：抽到時在布幕上點該號碼 → 棄權補抽，當場換人。工作人員若被抽到也一樣處理。</p>
+   <h2>1. 號碼來源</h2>
+   <p class="note">所有參加者的號碼都放進號碼池。沒到場的人不用事先排除：抽到時在布幕上點該號碼 → 棄權補抽，當場換人。工作人員若被抽到也一樣處理。</p>
    <div class="row">
      <label><input type="radio" name="src" value="range" id="srcRange" checked> 號碼範圍</label>
      <input id="rangeFrom" type="number" value="1" style="width:110px"> ～ <input id="rangeTo" type="number" value="110" style="width:110px">
@@ -157,7 +157,7 @@ table.l td.n{font-weight:800;font-size:17px;color:var(--accent)}
   <div class="card">
    <h2>3. 布幕標題</h2>
    <p class="note">顯示在抽獎畫面上方，讓畫面接得上投影簡報。</p>
-   <input id="titleIn" type="text" value="CSMMT 2026 晚宴摸彩" style="width:100%;max-width:520px">
+   <input id="titleIn" type="text" value="摸彩抽獎" style="width:100%;max-width:520px">
   </div>
 
   <div class="card">
@@ -227,7 +227,7 @@ table.l td.n{font-weight:800;font-size:17px;color:var(--accent)}
  <div class="info">一個人操作筆電，畫面投影到布幕。只會用到：填數字、按 Enter、點號碼。</div>
  <h3>開始前（工作人員）</h3>
  <ol>
-  <li>打開 <b>CSMMT2026_晚宴摸彩.html</b>，在設定頁填<b>名牌號碼範圍</b>（例如 1～110），確認<b>獎項組與份數</b>，按「開始抽獎」。</li>
+  <li>打開這個網頁，在設定頁填<b>號碼範圍</b>（例如 1～100），確認<b>獎項組與份數</b>，按「開始抽獎」。</li>
   <li>進入抽獎畫面後按右下角「<b>全螢幕</b>」。開場畫面會先列出整個號碼池。</li>
  </ol>
  <h3>每一輪（主持人說要抽幾個）</h3>
@@ -253,7 +253,7 @@ table.l td.n{font-weight:800;font-size:17px;color:var(--accent)}
  <h3>其他按鈕</h3>
  <ol start="11">
   <li>「號碼池」：把目前還沒中獎的所有號碼攤在布幕上，給大家看。「側欄」：開關右邊的已抽出名單。「設定」：回設定頁改號碼範圍或獎項。</li>
-  <li><b>老師臨時加獎</b>：按「<b>＋ 加獎</b>」，選要加到哪一組、填份數，或選「新增一組」填名稱、金額、份數 → 確定。剩餘數立刻更新，加獎會留紀錄。抽完才加也可以，按鈕會重新亮起。</li>
+  <li><b>臨時加獎</b>：按「<b>＋ 加獎</b>」，選要加到哪一組、填份數，或選「新增一組」填名稱、金額、份數 → 確定。剩餘數立刻更新，加獎會留紀錄。抽完才加也可以，按鈕會重新亮起。</li>
  </ol>
  <div class="info" style="margin-top:16px">快速鍵：<span class="k">Enter</span> 抽獎／下一組　<span class="k">Space</span> 跳過動畫　<span class="k">Esc</span> 關閉視窗</div>
 </div></div>
@@ -288,14 +288,11 @@ const Core=(function(){
   function randInt(n){ if(n<=0) return 0; const c=(typeof crypto!=='undefined'&&crypto.getRandomValues)?crypto:null; if(c){ const buf=new Uint32Array(1); const lim=Math.floor(0x100000000/n)*n; let r; do{ c.getRandomValues(buf); r=buf[0]; }while(r>=lim); return r%n; } return Math.floor(Math.random()*n); }
   function pick(arr,n){ const a=arr.slice(),out=[]; n=Math.min(n,a.length); for(let i=0;i<n;i++){ const j=i+randInt(a.length-i); const t=a[i]; a[i]=a[j]; a[j]=t; out.push(a[i]); } return out; }
   function defaultGroups(){ return [
-    {id:'g1',name:'禮券',amount:'300 元',count:25},
-    {id:'g2',name:'禮券',amount:'500 元',count:15},
-    {id:'g3',name:'摸彩禮金',amount:'1,000 元',count:8},
-    {id:'g4',name:'摸彩禮金',amount:'2,000 元',count:5},
-    {id:'g5',name:'馮展華教授特別獎',amount:'2,000 元',count:3},
-    {id:'g6',name:'理事長獎',amount:'6,000 元',count:1}
+    {id:'g1',name:'三獎',amount:'',count:10},
+    {id:'g2',name:'二獎',amount:'',count:5},
+    {id:'g3',name:'頭獎',amount:'',count:1}
   ]; }
-  function newState(){ return {version:1,title:'CSMMT 2026 晚宴摸彩',setup:{mode:'range',from:1,to:110,listText:''},pool:[],excluded:[],groups:defaultGroups(),rounds:[],currentGroupId:null,ready:false,lastN:5,nextRoundId:1,showSide:true}; }
+  function newState(){ return {version:1,title:'摸彩抽獎',setup:{mode:'range',from:1,to:100,listText:''},pool:[],excluded:[],groups:defaultGroups(),rounds:[],currentGroupId:null,ready:false,lastN:5,nextRoundId:1,showSide:true}; }
   function label(g){ let a=String(g.amount||'').trim(); if(/^[\d,]+$/.test(a)) a+=' 元'; return [g.name,a].map(x=>String(x||'').trim()).filter(Boolean).join(' ')||'（未命名）'; }
   function groupById(s,id){ return s.groups.find(g=>g.id===id)||null; }
   function drawnSet(s){ const set=new Set(); s.rounds.forEach(r=>r.slots.forEach(sl=>{ if(sl.num!=null) set.add(sl.num); sl.prev.forEach(p=>set.add(p.num)); })); return set; }
@@ -366,7 +363,7 @@ if(typeof module!=='undefined') module.exports=Core;
 <!-- ================= 畫面與操作 ================= -->
 <script>
 (function(){
-const KEY='csmmt2026_lottery_v1';
+const KEY='lottery_v1';
 const $=id=>document.getElementById(id);
 let S=Core.newState();
 let DG=[];            // 設定頁草稿的獎項組
@@ -652,9 +649,9 @@ function helpOpen(){ return !$('help').classList.contains('hidden'); }
 $('helpBtn').onclick=$('helpBtn2').onclick=()=>{ $('help').classList.remove('hidden'); $('help').scrollTop=0; };
 $('helpClose').onclick=()=>$('help').classList.add('hidden');
 $('panelClose').onclick=closePanel;
-$('csvBtn').onclick=()=>download('CSMMT2026-摸彩結果-'+stamp()+'.csv',Core.toCSV(S),'text/csv;charset=utf-8');
-$('forfCsvBtn').onclick=()=>download('CSMMT2026-棄權名單-'+stamp()+'.csv',Core.forfeitCSV(S),'text/csv;charset=utf-8');
-$('bakBtn').onclick=()=>download('CSMMT2026-摸彩備份-'+stamp()+'.json',JSON.stringify(S,null,1),'application/json');
+$('csvBtn').onclick=()=>download('摸彩結果-'+stamp()+'.csv',Core.toCSV(S),'text/csv;charset=utf-8');
+$('forfCsvBtn').onclick=()=>download('棄權名單-'+stamp()+'.csv',Core.forfeitCSV(S),'text/csv;charset=utf-8');
+$('bakBtn').onclick=()=>download('摸彩備份-'+stamp()+'.json',JSON.stringify(S,null,1),'application/json');
 $('copyBtn').onclick=async()=>{ const t=Core.toText(S); $('copyArea').value=t; try{ await navigator.clipboard.writeText(t); toast('已複製到剪貼簿','good'); }catch(e){ $('copyArea').focus(); $('copyArea').select(); toast('請按 Ctrl+C 複製','warn'); } };
 $('impBtn').onclick=$('impBtn2').onclick=()=>$('impInput').click();
 $('impInput').onchange=e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return; const rd=new FileReader();
