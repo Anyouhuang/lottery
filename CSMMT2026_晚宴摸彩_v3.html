@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSMMT 2026 晚宴摸彩</title>
+<style>
+:root{--bg:#0a0f1f;--bg2:#141b33;--tile:#172040;--line:#2f3b66;--fg:#f7f8fc;--muted:#a9b2d0;--accent:#ffd166;--good:#5eead4;--bad:#ff5a5a;--info:#7cb4ff}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC","Heiti TC","Helvetica Neue",Arial,sans-serif;overflow:hidden}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--bg2);color:var(--fg);border-radius:10px;padding:10px 16px;white-space:nowrap}
+button:hover{border-color:var(--accent)}
+button:disabled{opacity:.35;cursor:not-allowed}
+button.primary{background:var(--accent);color:#211a00;border-color:var(--accent);font-weight:800}
+button.primary kbd{color:#5a4a10;background:#f3c75a;border-color:#d9ad3d}
+button.danger{border-color:#7a3030;color:#ff8a8a}
+button.danger.fill{background:#b3261e;color:#fff;border-color:#b3261e;font-weight:800}
+button.on{border-color:var(--good);color:var(--good)}
+button.sm{padding:4px 10px;font-size:14px;border-radius:8px}
+input,select,textarea{font:inherit;background:#0d1328;color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
+textarea{width:100%;min-height:110px;resize:vertical;font-family:ui-monospace,Consolas,monospace}
+.screen{display:none;height:100%}
+.screen.active{display:flex;flex-direction:column}
+.hidden{display:none!important}
+/* ---- 設定頁 ---- */
+#setup{overflow:auto}
+.wrap{width:min(1040px,100%);margin:0 auto;padding:28px 24px 60px}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-bottom:18px}
+.card h2{margin:0 0 12px;font-size:20px}
+.card p.note{color:var(--muted);margin:6px 0 10px;font-size:14px;line-height:1.5}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.info{color:var(--muted);font-size:14px;line-height:1.5}
+.warn{color:#ffb4b4}
+.ok{color:var(--good)}
+table.g{width:100%;border-collapse:collapse}
+table.g th,table.g td{padding:6px 6px;text-align:left;border-bottom:1px solid var(--line);font-size:15px}
+table.g input{width:100%;padding:7px 10px}
+table.g td.ctl{white-space:nowrap;width:1%}
+h1{margin:0 0 6px;font-size:26px}
+.sub{color:var(--muted);margin:0 0 20px}
+/* ---- 抽獎頁 ---- */
+#hdr{display:flex;flex-direction:column;align-items:center;padding:1.2vh 2vw .6vh;border-bottom:1px solid var(--line);background:linear-gradient(#111937,#0a0f1f)}
+#hdr .big{font-size:7.6vmin;font-weight:900;line-height:1.15;color:#fff;text-align:center;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#hdr .hrow{display:flex;gap:4vw;align-items:baseline;justify-content:center;flex-wrap:wrap;font-size:3vmin;color:var(--muted);margin-top:.3vh}
+#hdr .hk b{font-size:5.6vmin;font-weight:900;font-variant-numeric:tabular-nums;line-height:1}
+#hdr .hk b.c{color:var(--accent)}
+#hdr .hk b.r{color:var(--good)}
+#hdr .hk.sm{font-size:2.2vmin}
+#roundBar{text-align:center;color:var(--muted);font-size:2.6vmin;padding:.8vh 0 0;min-height:3.4vmin;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#main{flex:1;min-height:0;display:flex}
+#stage{flex:1;min-width:0;min-height:0;display:flex;flex-wrap:wrap;justify-content:center;align-content:center;padding:1.2vh 2.2vw;position:relative}
+.tile{background:var(--tile);border:.45vmin solid var(--line);border-radius:2vmin;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;user-select:none;transition:border-color .15s,box-shadow .15s,background .15s;overflow:hidden}
+.tile:hover{border-color:#5b6aa3}
+.tile .num{font-weight:900;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.tile.sel{border-color:var(--bad);box-shadow:0 0 0 .7vmin rgba(255,90,90,.35);background:#2a1620}
+.tile.empty .num{color:var(--muted)}
+.tile .badge{position:absolute;top:.8vmin;right:1vmin;background:var(--good);color:#06302a;font-weight:800;font-size:2.2vmin;padding:.2vmin 1vmin;border-radius:1vmin}
+.tile.pop{animation:pop .4s cubic-bezier(.2,1.4,.4,1)}
+.tile.spin .num{color:#7f8bb8}
+.tile.spin .badge{visibility:hidden}
+@keyframes pop{0%{transform:scale(.85)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+/* 號碼池／開場畫面 */
+.pv{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;gap:1.6vh;overflow:hidden}
+.pv .ttl{font-size:6.5vmin;font-weight:900;color:#fff;text-align:center;line-height:1.2}
+.pv .ph{color:var(--muted);font-size:2.8vmin;text-align:center}
+.pv .chips{display:flex;flex-wrap:wrap;justify-content:center;gap:.7vmin;max-width:100%;overflow:auto;padding:0 1vw}
+.pv .chip{background:var(--tile);border:1px solid var(--line);border-radius:.8vmin;padding:.3vmin 1.1vmin;font-size:2.3vmin;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+/* 側欄：已抽出名單 */
+#side{width:16vw;min-width:200px;max-width:280px;border-left:1px solid var(--line);background:#0d1328;overflow:auto;padding:1vh 1vw;font-size:clamp(12px,1.9vmin,16px);display:flex;flex-direction:column}
+#side .sh{color:var(--muted);letter-spacing:.08em;margin-bottom:.8vh}
+.sg{margin-bottom:1vh}
+.sgl{display:flex;justify-content:space-between;gap:6px;color:#fff;font-weight:700}
+.sgl span{color:var(--muted);font-weight:400;white-space:nowrap}
+.sgn{color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums;line-height:1.55;word-break:break-word}
+.sgn .x{color:var(--muted);font-weight:400;text-decoration:line-through}
+#side .sf{margin-top:auto;color:var(--good);padding-top:.8vh;border-top:1px dashed var(--line)}
+#ctl{display:flex;align-items:center;gap:8px;padding:8px 14px;border-top:1px solid var(--line);background:#0d1328;flex-wrap:wrap}
+#ctl .sep{width:1px;height:28px;background:var(--line);margin:0 2px;flex:none}
+#ctl label{color:var(--muted);font-size:14px;white-space:nowrap}
+#ctl label.n{color:#fff;font-size:18px;font-weight:700}
+#ctl .cnt{display:flex;align-items:center;gap:6px;background:#1a2340;border:2px solid var(--accent);border-radius:12px;padding:3px 10px;flex:none}
+#ctl button{padding:8px 12px;flex:none}
+
+#countIn{width:92px;font-size:30px;font-weight:900;text-align:center;padding:2px 4px;flex:none;color:var(--accent);border:none;background:#0d1328}
+#groupSel{max-width:230px;min-width:120px;text-overflow:ellipsis;padding:8px 10px}
+#drawBtn{font-size:20px;padding:8px 22px}
+#drawBtn b{font-size:26px}
+.spacer{flex:1}
+kbd{font:12px ui-monospace,monospace;background:#1e2748;border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--muted)}
+/* ---- 清單面板 ---- */
+#panel{position:fixed;top:0;right:0;height:100%;width:min(580px,100%);background:#0f1530;border-left:1px solid var(--line);transform:translateX(102%);transition:transform .2s;display:flex;flex-direction:column;z-index:20;box-shadow:-10px 0 40px rgba(0,0,0,.5)}
+#panel.open{transform:none}
+#panel .ph{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+#panel .ph h2{margin:0;font-size:18px;flex:1}
+#panel .pb{flex:1;overflow:auto;padding:14px 16px}
+#panel h3{font-size:14px;color:var(--muted);margin:16px 0 8px;letter-spacing:.06em}
+table.l{width:100%;border-collapse:collapse;font-size:14px}
+table.l th,table.l td{padding:5px 6px;border-bottom:1px solid #1f2850;text-align:left;vertical-align:middle}
+table.l td.n{font-weight:800;font-size:17px;color:var(--accent)}
+.stat{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #1f2850;font-size:14px}
+/* ---- 對話框（不用瀏覽器內建的 confirm，在投影或預覽環境都能用） ---- */
+#modal,#addModal{position:fixed;inset:0;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;z-index:40}
+.mbox{background:#141b33;border:2px solid var(--info);border-radius:16px;padding:22px 26px;width:min(600px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.mbox .mt{font-size:clamp(20px,3.4vmin,34px);font-weight:800;margin-bottom:10px}
+.mbox .mb{color:#dfe4f5;font-size:clamp(15px,2.3vmin,22px);line-height:1.6;white-space:pre-line}
+.mbox input{width:100%;margin-top:12px;font-size:18px}
+.mbox .row input,.mbox .row select{margin-top:0}
+.mbox .row label{color:var(--muted)}
+.mbtns{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.mbtns button{font-size:17px;padding:10px 22px}
+/* ---- 使用教學 ---- */
+#help{position:fixed;inset:0;background:rgba(5,8,20,.92);z-index:35;overflow:auto;padding:4vh 4vw}
+#help .hb{max-width:900px;margin:0 auto;background:#141b33;border:1px solid var(--line);border-radius:18px;padding:26px 30px 30px}
+#help h2{margin:0 0 6px;font-size:clamp(22px,3.4vmin,32px)}
+#help h3{margin:22px 0 8px;font-size:clamp(16px,2.4vmin,22px);color:var(--accent)}
+#help ol{margin:0;padding-left:1.4em;font-size:clamp(15px,2.2vmin,20px);line-height:1.7}
+#help li{margin:4px 0}
+#help b{color:#fff}
+#help .k{display:inline-block;background:#1e2748;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-weight:700;color:var(--accent)}
+#help .top{display:flex;align-items:center;gap:12px}
+#help .top .spacer{flex:1}
+#toast{position:fixed;left:50%;top:20vh;transform:translateX(-50%);background:#1b2447;border:2px solid var(--info);color:#fff;padding:14px 26px;border-radius:14px;font-size:3.2vmin;font-weight:700;z-index:30;opacity:0;pointer-events:none;transition:opacity .15s;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+#toast.warn{border-color:var(--bad);background:#3a1620}
+#toast.good{border-color:var(--good);background:#0f2e2a}
+#saveWarn{position:fixed;left:12px;bottom:70px;background:#3a1620;border:1px solid var(--bad);padding:8px 12px;border-radius:10px;font-size:14px;z-index:15}
+</style>
+</head>
+<body>
+
+<!-- ================= 設定頁 ================= -->
+<div id="setup" class="screen active">
+ <div class="wrap">
+  <h1>CSMMT 2026 晚宴摸彩｜設定</h1>
+  <p class="sub">完全離線。設定與結果會存在這台電腦的瀏覽器裡；要換電腦請先「匯出備份」再到另一台「匯入備份」。　<button id="helpBtn2" class="sm">第一次用？看使用教學</button></p>
+
+  <div class="card">
+   <h2>1. 號碼來源（名牌流水號）</h2>
+   <p class="note">全部報名者的號碼都放進號碼池。沒到場的人不用事先排除：抽到時在布幕上點該號碼 → 棄權補抽，當場換人。工作人員若被抽到也一樣處理。</p>
+   <div class="row">
+     <label><input type="radio" name="src" value="range" id="srcRange" checked> 號碼範圍</label>
+     <input id="rangeFrom" type="number" value="1" style="width:110px"> ～ <input id="rangeTo" type="number" value="110" style="width:110px">
+   </div>
+   <div class="row"><label><input type="radio" name="src" value="list" id="srcList"> 貼上號碼清單</label></div>
+   <textarea id="listText" placeholder="用空白、逗號或換行分隔，例如：1 2 3 5 8 13 ..."></textarea>
+   <div class="info" id="poolInfo"></div>
+  </div>
+
+  <div class="card">
+   <h2>2. 獎項組（依抽獎順序）</h2>
+   <p class="note">抽獎時一組一組抽，每組每輪抽幾個由現場決定。「名稱＋金額」會顯示在布幕上。</p>
+   <table class="g"><thead><tr><th style="width:40%">獎項名稱</th><th style="width:24%">金額／說明（例：6,000 元）</th><th style="width:14%">份數</th><th></th></tr></thead><tbody id="groupsBody"></tbody></table>
+   <div class="row"><button id="addGroup" class="sm">＋ 新增一組</button><span class="spacer"></span><span class="info" id="groupsTotal"></span></div>
+  </div>
+
+  <div class="card">
+   <h2>3. 布幕標題</h2>
+   <p class="note">顯示在抽獎畫面上方，讓畫面接得上投影簡報。</p>
+   <input id="titleIn" type="text" value="CSMMT 2026 晚宴摸彩" style="width:100%;max-width:520px">
+  </div>
+
+  <div class="card">
+   <div id="setupSummary" class="info" style="font-size:16px;margin-bottom:12px"></div>
+   <div class="row">
+     <button id="startBtn" class="primary" style="font-size:18px">開始抽獎（切換到抽獎畫面）</button>
+     <button id="cancelBtn" class="hidden">取消，回到抽獎畫面</button>
+     <span class="spacer"></span>
+     <button id="impBtn2" class="sm">匯入備份</button>
+     <button id="resetAll" class="sm danger">全部清除重來</button>
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- ================= 抽獎頁 ================= -->
+<div id="draw" class="screen">
+ <div id="hdr">
+  <div class="big" id="hGroup">—</div>
+  <div class="hrow"><span class="hk">本組還剩 <b class="c" id="hGroupRem">0</b></span><span class="hk">全場還剩 <b class="r" id="hTotalRem">0</b></span><span class="hk sm" id="hElig"></span></div>
+ </div>
+ <div id="roundBar"></div>
+ <div id="main">
+  <div id="stage"></div>
+  <div id="side"><div class="sh">已抽出號碼</div><div id="sideList"></div><div class="sf" id="sideFoot"></div></div>
+ </div>
+ <div id="ctl">
+  <select id="groupSel" title="獎項組"></select>
+  <span class="cnt"><label class="n">本輪抽</label><input id="countIn" type="number" min="1" max="25" value="5"><label class="n">個</label></span>
+  <button id="drawBtn" class="primary">抽獎 <kbd>Enter</kbd></button>
+  <button id="skipBtn" disabled>跳過動畫 <kbd>Space</kbd></button>
+  <span class="sep"></span>
+  <button id="addBtn">＋ 加獎</button>
+  <button id="undoBtn">撤銷上一輪</button>
+  <button id="poolBtn">號碼池</button>
+  <button id="sideBtn">側欄</button>
+  <button id="listBtn">清單／匯出</button>
+  <button id="setupBtn">設定</button>
+  <button id="fsBtn" class="sm">全螢幕</button>
+  <button id="helpBtn" class="sm">教學</button>
+ </div>
+</div>
+
+<!-- ================= 清單面板 ================= -->
+<div id="panel">
+ <div class="ph"><h2>已抽清單</h2>
+   <button id="csvBtn" class="sm">匯出 CSV</button>
+   <button id="forfCsvBtn" class="sm">棄權 CSV</button>
+   <button id="bakBtn" class="sm">匯出備份</button>
+   <button id="impBtn" class="sm">匯入備份</button>
+   <button id="panelClose" class="sm">關閉 <kbd>Esc</kbd></button></div>
+ <div class="pb">
+  <h3>各組進度</h3><div id="statGroups"></div>
+  <h3>得獎號碼</h3>
+  <table class="l"><thead><tr><th>#</th><th>獎項</th><th>號碼</th><th>時間</th><th></th></tr></thead><tbody id="winTable"></tbody></table>
+  <h3>棄權（不在場，已換人）</h3><div id="forfList" class="info">無</div>
+  <h3>現場加獎紀錄</h3><div id="addList" class="info">無</div>
+  <h3>可複製的文字</h3>
+  <div class="row"><button id="copyBtn" class="sm">複製全文</button><span class="info">複製不成功時，直接在下方框內 Ctrl+A、Ctrl+C</span></div>
+  <textarea id="copyArea" readonly style="min-height:200px"></textarea>
+ </div>
+</div>
+
+<!-- ================= 使用教學 ================= -->
+<div id="help" class="hidden"><div class="hb">
+ <div class="top"><h2>使用教學</h2><span class="spacer"></span><button id="helpClose">關閉 <kbd>Esc</kbd></button></div>
+ <div class="info">一個人操作筆電，畫面投影到布幕。只會用到：填數字、按 Enter、點號碼。</div>
+ <h3>開始前（工作人員）</h3>
+ <ol>
+  <li>打開 <b>CSMMT2026_晚宴摸彩.html</b>，在設定頁填<b>名牌號碼範圍</b>（例如 1～110），確認<b>獎項組與份數</b>，按「開始抽獎」。</li>
+  <li>進入抽獎畫面後按右下角「<b>全螢幕</b>」。開場畫面會先列出整個號碼池。</li>
+ </ol>
+ <h3>每一輪（主持人說要抽幾個）</h3>
+ <ol start="3">
+  <li>左下角黃框「<b>本輪抽 ＿ 個</b>」填數字，黃色按鈕會跟著顯示「抽獎 N 個」，先確認這個數字再按。</li>
+  <li>按 <span class="k">Enter</span> 或點黃色按鈕 → 號碼滾動後自動停下。趕時間按 <span class="k">Space</span> 直接跳過動畫。</li>
+  <li>布幕最上面是<b>目前獎項</b>，第二排「<b>本組還剩 / 全場還剩</b>」每輪自動更新，主持人看這兩個數字講話。</li>
+ </ol>
+ <h3>有人不在場</h3>
+ <ol start="6">
+  <li><b>點布幕上那個號碼</b> → 出現「X 號不在場？」→ 按 <span class="k">Enter</span> 或「棄權並補抽」→ 立刻換出新號碼，其他號碼不動，剩餘獎項數不變。棄權的號碼之後不會再被抽到。</li>
+ </ol>
+ <h3>換下一組獎項</h3>
+ <ol start="7">
+  <li>本組抽完後，黃色按鈕自動變成「<b>下一組 ▶ ○○</b>」，按 <span class="k">Enter</span> 就進入下一組。要跳著抽也可以用左下角的下拉選單選組。</li>
+ </ol>
+ <h3>出錯或當機</h3>
+ <ol start="8">
+  <li>數量打錯已經抽下去：按「<b>撤銷上一輪</b>」→ 確認，整輪作廢、號碼回池，再重抽一次。</li>
+  <li>瀏覽器關掉、電腦重開：<b>重新打開檔案，結果都還在</b>，接著抽即可。程式完全不需要網路。</li>
+  <li>結束後按「<b>清單／匯出</b>」→ 匯出 CSV 或複製文字，拿去簽收。中途也可以按「匯出備份」把進度存到隨身碟。</li>
+ </ol>
+ <h3>其他按鈕</h3>
+ <ol start="11">
+  <li>「號碼池」：把目前還沒中獎的所有號碼攤在布幕上，給大家看。「側欄」：開關右邊的已抽出名單。「設定」：回設定頁改號碼範圍或獎項。</li>
+  <li><b>老師臨時加獎</b>：按「<b>＋ 加獎</b>」，選要加到哪一組、填份數，或選「新增一組」填名稱、金額、份數 → 確定。剩餘數立刻更新，加獎會留紀錄。抽完才加也可以，按鈕會重新亮起。</li>
+ </ol>
+ <div class="info" style="margin-top:16px">快速鍵：<span class="k">Enter</span> 抽獎／下一組　<span class="k">Space</span> 跳過動畫　<span class="k">Esc</span> 關閉視窗</div>
+</div></div>
+
+<!-- ================= 加獎 ================= -->
+<div id="addModal" class="hidden"><div class="mbox">
+ <div class="mt">現場加獎</div>
+ <div class="mb">加到既有的組，或新增一組。加獎會留紀錄，清單與匯出都看得到。</div>
+ <div class="row" style="margin-top:12px"><label style="min-width:5em">加到</label><select id="agTarget" style="flex:1"></select></div>
+ <div id="agNewRow" class="row hidden"><label style="min-width:5em">名稱</label><input id="agName" type="text" placeholder="例：加碼獎" style="flex:1;margin:0"><label>金額</label><input id="agAmt" type="text" placeholder="例：1,000 元" style="width:9em;margin:0"></div>
+ <div class="row"><label style="min-width:5em">份數</label><input id="agCount" type="number" min="1" max="99" value="1" style="width:7em;margin:0;font-size:24px;font-weight:800;text-align:center"><span class="info" id="agInfo"></span></div>
+ <div class="mbtns"><button id="agCancel">取消</button><button id="agOk" class="primary">確定加獎</button></div>
+</div></div>
+
+<!-- ================= 對話框 ================= -->
+<div id="modal" class="hidden"><div class="mbox"><div class="mt" id="mTitle"></div><div class="mb" id="mBody"></div><input id="mInput" class="hidden"><div class="mbtns"><button id="mCancel">取消</button><button id="mOk" class="primary">確定</button></div></div></div>
+
+<input type="file" id="impInput" accept=".json,application/json" class="hidden">
+<div id="toast"></div>
+<div id="saveWarn" class="hidden">⚠ 無法寫入本機儲存，請定時「匯出備份」</div>
+
+<!-- ================= 核心邏輯（不碰畫面） ================= -->
+<script id="core">
+const Core=(function(){
+  const SEP=/[\s,，、;；|]+/;
+  function norm(t){ t=String(t).trim(); if(/^\d+$/.test(t)) t=String(parseInt(t,10)); return t; }
+  function parseList(text){ const out=[],seen=new Set(); String(text||'').split(SEP).forEach(raw=>{ const t=norm(raw); if(!t) return; if(!seen.has(t)){ seen.add(t); out.push(t);} }); return out; }
+  function rangeList(a,b){ a=parseInt(a,10); b=parseInt(b,10); if(isNaN(a)||isNaN(b)) return []; if(a>b){ const t=a; a=b; b=t; } if(b-a>9999) b=a+9999; const out=[]; for(let i=a;i<=b;i++) out.push(String(i)); return out; }
+  function cmp(x,y){ const nx=/^\d+$/.test(x),ny=/^\d+$/.test(y); if(nx&&ny) return (+x)-(+y); if(nx) return -1; if(ny) return 1; return x.localeCompare(y,'zh-Hant'); }
+  function sortList(arr){ return arr.slice().sort(cmp); }
+  /* 亂數：用作業系統的密碼學亂數來源（crypto.getRandomValues），不是 Math.random，也沒有任何種子或權重 */
+  function randInt(n){ if(n<=0) return 0; const c=(typeof crypto!=='undefined'&&crypto.getRandomValues)?crypto:null; if(c){ const buf=new Uint32Array(1); const lim=Math.floor(0x100000000/n)*n; let r; do{ c.getRandomValues(buf); r=buf[0]; }while(r>=lim); return r%n; } return Math.floor(Math.random()*n); }
+  function pick(arr,n){ const a=arr.slice(),out=[]; n=Math.min(n,a.length); for(let i=0;i<n;i++){ const j=i+randInt(a.length-i); const t=a[i]; a[i]=a[j]; a[j]=t; out.push(a[i]); } return out; }
+  function defaultGroups(){ return [
+    {id:'g1',name:'禮券',amount:'300 元',count:25},
+    {id:'g2',name:'禮券',amount:'500 元',count:15},
+    {id:'g3',name:'摸彩禮金',amount:'1,000 元',count:8},
+    {id:'g4',name:'摸彩禮金',amount:'2,000 元',count:5},
+    {id:'g5',name:'馮展華教授特別獎',amount:'2,000 元',count:3},
+    {id:'g6',name:'理事長獎',amount:'6,000 元',count:1}
+  ]; }
+  function newState(){ return {version:1,title:'CSMMT 2026 晚宴摸彩',setup:{mode:'range',from:1,to:110,listText:''},pool:[],excluded:[],groups:defaultGroups(),rounds:[],currentGroupId:null,ready:false,lastN:5,nextRoundId:1,showSide:true}; }
+  function label(g){ let a=String(g.amount||'').trim(); if(/^[\d,]+$/.test(a)) a+=' 元'; return [g.name,a].map(x=>String(x||'').trim()).filter(Boolean).join(' ')||'（未命名）'; }
+  function groupById(s,id){ return s.groups.find(g=>g.id===id)||null; }
+  function drawnSet(s){ const set=new Set(); s.rounds.forEach(r=>r.slots.forEach(sl=>{ if(sl.num!=null) set.add(sl.num); sl.prev.forEach(p=>set.add(p.num)); })); return set; }
+  function eligible(s){ const ex=new Set(s.excluded||[]),d=drawnSet(s); return s.pool.filter(n=>!ex.has(n)&&!d.has(n)); }
+  function groupWins(s,gid){ let c=0; s.rounds.forEach(r=>{ if(r.groupId===gid) r.slots.forEach(sl=>{ if(sl.status==='win') c++; }); }); return c; }
+  function groupRemaining(s,g){ return Math.max(0,(parseInt(g.count,10)||0)-groupWins(s,g.id)); }
+  function totalPrizes(s){ return s.groups.reduce((a,g)=>a+(parseInt(g.count,10)||0),0); }
+  function totalRemaining(s){ return s.groups.reduce((a,g)=>a+groupRemaining(s,g),0); }
+  function nextGroupId(s,fromId){ if(!s.groups.length) return null; let idx=s.groups.findIndex(g=>g.id===fromId); if(idx<0) idx=0; for(let i=0;i<s.groups.length;i++){ const g=s.groups[(idx+i)%s.groups.length]; if(groupRemaining(s,g)>0) return g.id; } return null; }
+  function checkDraw(s,gid,n){
+    const g=groupById(s,gid); if(!g) return {ok:false,msg:'請先選擇獎項組'};
+    if(!Number.isInteger(n)||n<1||n>25) return {ok:false,msg:'每輪數量請輸入 1～25'};
+    const rem=groupRemaining(s,g); if(rem<=0) return {ok:false,msg:'「'+label(g)+'」已抽完，請選下一組'};
+    if(n>rem) return {ok:false,msg:'「'+label(g)+'」只剩 '+rem+' 個獎，不能抽 '+n+' 個'};
+    const el=eligible(s).length; if(el<n) return {ok:false,msg:'可抽號碼只剩 '+el+' 個，不夠抽 '+n+' 個'};
+    return {ok:true};
+  }
+  function draw(s,gid,n){
+    const chk=checkDraw(s,gid,n); if(!chk.ok) throw new Error(chk.msg);
+    const g=groupById(s,gid),t=Date.now(),nums=pick(eligible(s),n);
+    const round={id:s.nextRoundId++,groupId:g.id,groupLabel:label(g),n:n,time:t,slots:nums.map(num=>({num:num,time:t,status:'win',prev:[]}))};
+    s.rounds.push(round); return round;
+  }
+  function forfeit(s,roundId,slotIdx){
+    const r=s.rounds.find(x=>x.id===roundId); if(!r) return {ok:false,msg:'找不到該輪'};
+    const sl=r.slots[slotIdx]; if(!sl||sl.status!=='win') return {ok:false,msg:'該格沒有可棄權的號碼'};
+    const t=Date.now(); sl.prev.push({num:sl.num,time:t});
+    const el=eligible(s);
+    if(el.length){ sl.num=el[randInt(el.length)]; sl.time=t; sl.status='win'; return {ok:true,num:sl.num}; }
+    sl.num=null; sl.status='empty'; return {ok:true,num:null,msg:'已無可補抽的號碼，此獎暫時空缺'};
+  }
+  function undoLast(s){ return s.rounds.pop()||null; }
+  /* 中途加獎：加到既有組或新增一組；每次都留一筆紀錄 */
+  function addPrizes(s,o){
+    const n=parseInt(o.count,10); if(!Number.isInteger(n)||n<1||n>99) return {ok:false,msg:'份數請輸入 1～99'};
+    s.additions=s.additions||[]; const t=Date.now();
+    if(o.groupId){ const g=groupById(s,o.groupId); if(!g) return {ok:false,msg:'找不到該組'}; g.count=(parseInt(g.count,10)||0)+n; g.added=(g.added||0)+n; s.additions.push({time:t,groupId:g.id,groupLabel:label(g),n:n,kind:'add'}); return {ok:true,group:g,isNew:false}; }
+    const name=String(o.name||'').trim(); if(!name) return {ok:false,msg:'請輸入獎項名稱'};
+    const g={id:'g'+t.toString(36),name:name,amount:String(o.amount||'').trim(),count:n,added:n,isNew:true};
+    let idx=s.groups.findIndex(x=>x.id===o.afterId); idx=idx<0?s.groups.length:idx+1; s.groups.splice(idx,0,g);
+    s.additions.push({time:t,groupId:g.id,groupLabel:label(g),n:n,kind:'new'}); return {ok:true,group:g,isNew:true};
+  }
+  function winners(s){ const out=[]; let i=0; s.rounds.forEach(r=>r.slots.forEach((sl,si)=>{ if(sl.status==='win') out.push({seq:++i,roundId:r.id,slot:si,groupId:r.groupId,groupLabel:r.groupLabel,num:sl.num,time:sl.time,replaced:sl.prev.length>0}); })); return out; }
+  function forfeits(s){ const out=[]; s.rounds.forEach(r=>r.slots.forEach((sl,si)=>{ sl.prev.forEach(p=>out.push({roundId:r.id,slot:si,groupId:r.groupId,groupLabel:r.groupLabel,num:p.num,time:p.time})); })); return out; }
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function fmtTime(t){ const d=new Date(t); return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds()); }
+  function fmtDateTime(t){ const d=new Date(t); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+fmtTime(t); }
+  function csvCell(v){ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
+  function toCSV(s){ const rows=[['序號','獎項','號碼','抽出時間','輪次','備註']]; winners(s).forEach(w=>rows.push([w.seq,w.groupLabel,w.num,fmtDateTime(w.time),w.roundId,w.replaced?'補抽':''])); return '﻿'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n'); }
+  function forfeitCSV(s){ const rows=[['獎項','棄權號碼','時間','輪次']]; forfeits(s).forEach(f=>rows.push([f.groupLabel,f.num,fmtDateTime(f.time),f.roundId])); return '﻿'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n'); }
+  function toText(s){
+    const ws=winners(s),lines=[(s.title||'摸彩')+' 結果　匯出時間 '+fmtDateTime(Date.now()),''];
+    const order=s.groups.map(g=>g.id),byG={}; ws.forEach(w=>{ (byG[w.groupId]=byG[w.groupId]||[]).push(w); });
+    const ids=order.concat(Object.keys(byG).filter(id=>!order.includes(id)));
+    ids.forEach(id=>{ const list=byG[id]||[],g=groupById(s,id); const lab=g?label(g):((list[0]&&list[0].groupLabel)||id); const cnt=g?g.count:list.length;
+      const addNote=g&&g.added?(g.isNew?'（現場新增）':'（現場加 '+g.added+' 份）'):'';
+      lines.push('【'+lab+'】'+list.length+'/'+cnt+' 份'+addNote); lines.push(list.length?list.map(w=>w.num+'號'+(w.replaced?'(補)':'')).join('、'):'（尚未抽）'); lines.push(''); });
+    const fs=forfeits(s); lines.push('棄權（不在場，已換人）：'+(fs.length?fs.map(f=>f.num+'號').join('、'):'無'));
+    const ad=s.additions||[]; if(ad.length) lines.push('現場加獎：'+ad.map(a=>fmtTime(a.time)+' '+(a.kind==='new'?'新增':'加')+'「'+a.groupLabel+'」'+a.n+' 份').join('；'));
+    lines.push('合計已抽出 '+ws.length+' 份 / 共 '+totalPrizes(s)+' 份');
+    return lines.join('\n');
+  }
+  return {parseList,rangeList,sortList,randInt,pick,defaultGroups,newState,label,groupById,drawnSet,eligible,groupWins,groupRemaining,totalPrizes,totalRemaining,nextGroupId,checkDraw,draw,forfeit,undoLast,addPrizes,winners,forfeits,fmtTime,fmtDateTime,toCSV,forfeitCSV,toText,pad};
+})();
+if(typeof module!=='undefined') module.exports=Core;
+</script>
+
+<!-- ================= 畫面與操作 ================= -->
+<script>
+(function(){
+const KEY='csmmt2026_lottery_v1';
+const $=id=>document.getElementById(id);
+let S=Core.newState();
+let DG=[];            // 設定頁草稿的獎項組
+let anim=null;        // 動畫狀態
+let poolView=false;   // 是否正在顯示號碼池
+let modalRes=null;    // 對話框的回呼
+let toastT=null;
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function load(){ try{ const raw=localStorage.getItem(KEY); if(raw){ const o=JSON.parse(raw); if(o&&o.version===1&&Array.isArray(o.rounds)&&Array.isArray(o.groups)) S=Object.assign(Core.newState(),o); } }catch(e){} }
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); $('saveWarn').classList.add('hidden'); }catch(e){ $('saveWarn').classList.remove('hidden'); } }
+function toast(msg,kind,ms){ const t=$('toast'); t.textContent=msg; t.className='show'+(kind?' '+kind:''); clearTimeout(toastT); toastT=setTimeout(()=>{ t.className=''; },ms||2600); }
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id)); if(id==='draw'){ $('countIn').value=S.lastN||5; renderDraw(); } else renderSetup(); }
+function download(name,content,type){ const blob=new Blob([content],{type:type}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },800); }
+function stamp(){ const d=new Date(),p=Core.pad; return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes()); }
+
+/* ---------- 對話框 ---------- */
+function ask(o){
+  return new Promise(res=>{
+    if(modalRes) modalRes(false);
+    $('mTitle').textContent=o.title||''; $('mBody').textContent=o.body||'';
+    const inp=$('mInput'); inp.classList.toggle('hidden',!o.input); inp.value=''; inp.placeholder=o.input||'';
+    const ok=$('mOk'); ok.textContent=o.ok||'確定'; ok.className=o.danger?'danger fill':'primary';
+    $('mCancel').textContent=o.cancel||'取消';
+    $('modal').classList.remove('hidden'); modalRes=res;
+    setTimeout(()=>{ (o.input?inp:ok).focus(); },0);
+  });
+}
+function closeModal(yes){ if(!modalRes) return; const r=modalRes; modalRes=null; const hasInput=!$('mInput').classList.contains('hidden'); $('modal').classList.add('hidden'); r(hasInput?(yes?$('mInput').value:false):!!yes); }
+$('mOk').onclick=()=>closeModal(true);
+$('mCancel').onclick=()=>closeModal(false);
+$('modal').addEventListener('click',e=>{ if(e.target===$('modal')) closeModal(false); });
+
+/* ---------- 設定頁 ---------- */
+function renderSetup(){
+  const st=S.setup||{};
+  $('srcRange').checked=st.mode!=='list'; $('srcList').checked=st.mode==='list';
+  $('rangeFrom').value=st.from!=null?st.from:1; $('rangeTo').value=st.to!=null?st.to:110;
+  $('listText').value=st.listText||''; $('titleIn').value=S.title||'';
+  DG=JSON.parse(JSON.stringify(S.groups));
+  renderGroups(); updateSetupInfo();
+  $('startBtn').textContent=S.ready?'套用設定，回到抽獎畫面':'開始抽獎（切換到抽獎畫面）';
+  $('cancelBtn').classList.toggle('hidden',!S.ready);
+}
+function renderGroups(){
+  const tb=$('groupsBody'); tb.innerHTML='';
+  DG.forEach((g,i)=>{
+    const tr=document.createElement('tr'); tr.dataset.id=g.id;
+    tr.innerHTML='<td><input class="gName" value="'+esc(g.name)+'"></td><td><input class="gAmt" value="'+esc(g.amount)+'"></td><td><input class="gCnt" type="number" min="0" value="'+esc(g.count)+'"></td><td class="ctl"><button class="sm up" title="上移">↑</button> <button class="sm dn" title="下移">↓</button> <button class="sm del danger">✕</button></td>';
+    tr.querySelector('.up').onclick=()=>{ commitGroups(); if(i>0){ const t=DG[i-1]; DG[i-1]=DG[i]; DG[i]=t; renderGroups(); updateSetupInfo(); } };
+    tr.querySelector('.dn').onclick=()=>{ commitGroups(); if(i<DG.length-1){ const t=DG[i+1]; DG[i+1]=DG[i]; DG[i]=t; renderGroups(); updateSetupInfo(); } };
+    tr.querySelector('.del').onclick=async()=>{ commitGroups(); const w=Core.groupWins(S,g.id); if(w>0&&!(await ask({title:'刪除「'+Core.label(g)+'」？',body:'這組已抽出 '+w+' 個得獎號碼，刪除後紀錄仍會留在清單裡。',ok:'刪除',danger:true}))) return; DG.splice(i,1); renderGroups(); updateSetupInfo(); };
+    tr.querySelectorAll('input').forEach(inp=>inp.addEventListener('input',updateSetupInfo));
+    tb.appendChild(tr);
+  });
+}
+function commitGroups(){
+  Array.from($('groupsBody').querySelectorAll('tr')).forEach(tr=>{ const g=DG.find(x=>x.id===tr.dataset.id); if(!g) return; g.name=tr.querySelector('.gName').value.trim(); g.amount=tr.querySelector('.gAmt').value.trim(); g.count=Math.max(0,parseInt(tr.querySelector('.gCnt').value,10)||0); });
+}
+function draft(){
+  commitGroups();
+  const mode=$('srcList').checked?'list':'range';
+  const setup={mode:mode,from:$('rangeFrom').value,to:$('rangeTo').value,listText:$('listText').value};
+  const pool=mode==='list'?Core.parseList(setup.listText):Core.rangeList(setup.from,setup.to);
+  return Object.assign({},S,{setup:setup,pool:pool,excluded:[],groups:DG,title:$('titleIn').value.trim()});
+}
+function updateSetupInfo(){
+  const T=draft(),pool=T.pool;
+  $('poolInfo').textContent=pool.length?'共 '+pool.length+' 個號碼'+(pool.length<=12?'：'+pool.join(' '):''):'尚未設定號碼';
+  const total=Core.totalPrizes(T); $('groupsTotal').textContent='獎項合計 '+total+' 份';
+  const el=Core.eligible(T).length,drawn=Core.winners(T).length,remain=total-drawn;
+  let msg='可抽號碼 '+el+' 個（號碼池 '+pool.length+' － 已中獎/棄權 '+Core.drawnSet(T).size+'）　｜　獎項共 '+total+' 份，已抽出 '+drawn+' 份';
+  let cls='ok';
+  if(!pool.length){ msg='請先設定號碼來源'; cls='warn'; }
+  else if(!total){ msg='獎項份數合計為 0，請填份數'; cls='warn'; }
+  else if(el<remain){ msg+='　⚠ 可抽號碼（'+el+'）少於剩餘獎項（'+remain+'），抽到後面會沒人可抽'; cls='warn'; }
+  $('setupSummary').className='info '+cls; $('setupSummary').textContent=msg;
+}
+['rangeFrom','rangeTo','listText','titleIn'].forEach(id=>$(id).addEventListener('input',updateSetupInfo));
+['srcRange','srcList'].forEach(id=>$(id).addEventListener('change',updateSetupInfo));
+$('addGroup').onclick=()=>{ commitGroups(); DG.push({id:'g'+Date.now().toString(36),name:'',amount:'',count:1}); renderGroups(); updateSetupInfo(); const last=$('groupsBody').querySelector('tr:last-child .gName'); if(last) last.focus(); };
+$('startBtn').onclick=async()=>{
+  const T=draft();
+  if(!T.pool.length){ toast('請先設定號碼來源','warn'); return; }
+  const groups=DG.filter(g=>(parseInt(g.count,10)||0)>0||Core.groupWins(S,g.id)>0).map(g=>({id:g.id,name:g.name||'獎項',amount:g.amount,count:parseInt(g.count,10)||0,added:g.added||0,isNew:!!g.isNew}));
+  if(!groups.length||!Core.totalPrizes({groups:groups})){ toast('請至少設定一組獎項與份數','warn'); return; }
+  const el=Core.eligible(T).length,remain=Core.totalPrizes({groups:groups})-Core.winners(T).length;
+  if(el<remain&&!(await ask({title:'號碼不夠分',body:'可抽號碼只有 '+el+' 個，少於剩餘獎項 '+remain+' 份，抽到後面會沒人可抽。仍要繼續？',ok:'仍要繼續'}))) return;
+  Object.assign(S,{setup:T.setup,pool:T.pool,excluded:[],groups:groups,title:T.title});
+  if(!Core.groupById(S,S.currentGroupId)||Core.groupRemaining(S,Core.groupById(S,S.currentGroupId))===0) S.currentGroupId=Core.nextGroupId(S,S.groups[0].id)||S.groups[0].id;
+  S.ready=true; poolView=false; save(); show('draw');
+};
+$('cancelBtn').onclick=()=>show('draw');
+$('resetAll').onclick=async()=>{ const v=await ask({title:'清除全部設定與抽獎結果？',body:'建議先匯出備份。請在下方輸入 RESET 以確認。',ok:'清除',danger:true,input:'輸入 RESET'}); if(v===false) return; if(v!=='RESET'){ toast('沒有輸入 RESET，已取消','warn'); return; } S=Core.newState(); poolView=false; save(); renderSetup(); toast('已清除','warn'); };
+
+/* ---------- 抽獎頁 ---------- */
+function curGroup(){ return Core.groupById(S,S.currentGroupId); }
+function lastRound(){ return S.rounds[S.rounds.length-1]||null; }
+function renderDraw(){ renderHeader(); renderStage(); renderSide(); renderControls(); }
+function renderHeader(){
+  if(!curGroup()&&S.groups.length) S.currentGroupId=Core.nextGroupId(S,S.groups[0].id)||S.groups[0].id;
+  const g=curGroup(),rem=g?Core.groupRemaining(S,g):0,tot=Core.totalRemaining(S),el=Core.eligible(S).length;
+  $('hGroup').textContent=g?Core.label(g):'—';
+  $('hGroupRem').textContent=rem; $('hTotalRem').textContent=tot;
+  $('hElig').textContent='可抽號碼 '+el+' 個　·　已抽出 '+Core.winners(S).length+' / '+Core.totalPrizes(S)+' 份';
+}
+function renderPool(withTitle){
+  const el=Core.sortList(Core.eligible(S)),stage=$('stage');
+  stage.innerHTML='<div class="pv">'+(withTitle?'<div class="ttl">'+esc(S.title||'')+'</div>':'')+
+    '<div class="ph">號碼池　可抽號碼 '+el.length+' 個'+(S.rounds.length?'（已中獎與棄權者不在內）':'')+'</div>'+
+    '<div class="chips">'+el.map(n=>'<span class="chip">'+esc(n)+'</span>').join('')+'</div>'+
+    (withTitle?'<div class="ph">按 Enter 或「抽獎」開始　·　要改號碼或獎項：右下角「設定」</div>':'')+'</div>';
+}
+function renderStage(){
+  const r=lastRound(),stage=$('stage');
+  stage.className=''; stage.style.gap='';
+  if(!r){ renderPool(true); $('roundBar').textContent=S.title||''; return; }
+  $('roundBar').textContent=(S.title?S.title+'　·　':'')+'第 '+r.id+' 輪　·　'+r.groupLabel+'　·　抽 '+r.n+' 個　·　'+Core.fmtTime(r.time)+'　·　點號碼＝棄權補抽';
+  if(poolView){ renderPool(false); return; }
+  stage.innerHTML='';
+  r.slots.forEach((sl,i)=>{
+    const t=document.createElement('div'); t.className='tile'+(sl.status==='empty'?' empty':''); t.dataset.i=i;
+    t.innerHTML='<div class="num">'+(sl.status==='empty'?'—':esc(sl.num))+'</div>'+(sl.prev.length?'<div class="badge">補</div>':'');
+    t.onclick=()=>{ if(anim){ skipAnim(); return; } if(sl.status!=='win'||modalRes||addOpen()) return; forfeitSlot(r.id,i,t); };
+    stage.appendChild(t);
+  });
+  fitTiles(r);
+}
+function fitTiles(r){
+  const stage=$('stage'),n=r.slots.length; if(!n) return;
+  const cs=getComputedStyle(stage);
+  const W=stage.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)-2;
+  const H=stage.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-2;
+  if(W<50||H<50) return;
+  const gap=Math.max(8,Math.round(Math.min(W,H)*0.016));
+  const maxLen=Math.max(2,...r.slots.map(s=>String(s.num==null?'—':s.num).length));
+  let best={f:0,c:1,w:0,h:0};
+  for(let c=1;c<=8&&c<=n;c++){ const rows=Math.ceil(n/c); const w=Math.floor((W-(c-1)*gap)/c),h=Math.floor((H-(rows-1)*gap)/rows); const f=Math.min((w-20)/(maxLen*0.64),h*0.74); if(f>best.f) best={f:f,c:c,w:w,h:h}; }
+  const f=Math.max(28,Math.min(380,Math.floor(best.f)));
+  stage.style.gap=gap+'px';
+  stage.querySelectorAll('.tile').forEach(t=>{ t.style.width=best.w+'px'; t.style.height=best.h+'px'; t.querySelector('.num').style.fontSize=f+'px'; });
+}
+function refit(){ const r=lastRound(); if(r&&$('draw').classList.contains('active')&&$('stage').querySelector('.tile')) fitTiles(r); }
+window.addEventListener('resize',refit);
+if(window.ResizeObserver) new ResizeObserver(refit).observe($('stage'));
+function renderSide(){
+  const side=$('side'); side.classList.toggle('hidden',S.showSide===false);
+  if(S.showSide===false) return;
+  const ws=Core.winners(S),fs=Core.forfeits(S),byG={},fbyG={};
+  ws.forEach(w=>{ (byG[w.groupId]=byG[w.groupId]||[]).push(w.num); });
+  fs.forEach(f=>{ (fbyG[f.groupId]=fbyG[f.groupId]||[]).push(f.num); });
+  let html='';
+  S.groups.forEach(g=>{ const list=Core.sortList(byG[g.id]||[]),fl=Core.sortList(fbyG[g.id]||[]); if(!list.length&&!fl.length) return;
+    html+='<div class="sg"><div class="sgl"><span style="color:#fff">'+esc(Core.label(g))+'</span><span>'+list.length+'/'+g.count+(g.added?' <i style="color:var(--good);font-style:normal">+'+g.added+'</i>':'')+'</span></div><div class="sgn">'+list.map(esc).join('　')+(fl.length?'　'+fl.map(n=>'<span class="x">'+esc(n)+'</span>').join('　'):'')+'</div></div>'; });
+  $('sideList').innerHTML=html||'<div class="info">尚未抽出</div>';
+  const uniq=new Set(ws.map(w=>w.num)).size;
+  const adn=(S.additions||[]).reduce((a,x)=>a+x.n,0);
+  $('sideFoot').textContent=ws.length?('已抽出 '+ws.length+' 個　'+(uniq===ws.length?'無重複 ✓':'⚠ 有重複')+(fs.length?'　棄權 '+fs.length:'')+(adn?'　加獎 +'+adn:'')):(adn?'加獎 +'+adn:'');
+}
+function renderControls(){
+  const gs=$('groupSel'); gs.innerHTML='';
+  S.groups.forEach(g=>{ const o=document.createElement('option'); o.value=g.id; o.textContent=Core.label(g)+'（剩 '+Core.groupRemaining(S,g)+'/'+g.count+'）'; gs.appendChild(o); });
+  gs.value=S.currentGroupId||''; gs.disabled=!!anim;
+  const g=curGroup(),rem=g?Core.groupRemaining(S,g):0,tot=Core.totalRemaining(S),r=lastRound(),btn=$('drawBtn');
+  if(tot===0){ btn.textContent='全部抽完 🎉'; btn.disabled=true; btn.dataset.mode='done'; }
+  else if(g&&rem===0){ const nid=Core.nextGroupId(S,g.id),ng=Core.groupById(S,nid); btn.textContent='下一組 ▶ '+(ng?Core.label(ng):''); btn.disabled=!!anim; btn.dataset.mode='next'; btn.dataset.next=nid||''; }
+  else { const n=parseInt($('countIn').value,10); btn.innerHTML='抽獎　<b>'+(n>0?n:'?')+'</b> 個 <kbd>Enter</kbd>'; btn.disabled=!!anim; btn.dataset.mode='draw'; }
+  $('countIn').disabled=!!anim;
+  $('skipBtn').disabled=!anim;
+  $('undoBtn').disabled=!r||!!anim;
+  $('addBtn').disabled=!!anim;
+  $('poolBtn').disabled=!r||!!anim; $('poolBtn').classList.toggle('on',poolView&&!!r);
+  $('sideBtn').classList.toggle('on',S.showSide!==false);
+}
+function primaryAction(){
+  if(anim||modalRes||addOpen()) return;
+  const btn=$('drawBtn'),mode=btn.dataset.mode;
+  if(mode==='done') return;
+  if(mode==='next'){ if(btn.dataset.next){ S.currentGroupId=btn.dataset.next; const g=curGroup(),rem=Core.groupRemaining(S,g); if(parseInt($('countIn').value,10)>rem) $('countIn').value=rem; save(); renderDraw(); toast('進入「'+Core.label(g)+'」，共 '+g.count+' 份','good'); } return; }
+  const n=parseInt($('countIn').value,10);
+  const chk=Core.checkDraw(S,S.currentGroupId,n); if(!chk.ok){ toast(chk.msg,'warn',3600); return; }
+  const round=Core.draw(S,S.currentGroupId,n); S.lastN=n; poolView=false; save();
+  renderHeader(); renderStage(); startAnim(round);
+}
+function startAnim(round,idxs,baseDelay,onDone){
+  const all=Array.from($('stage').querySelectorAll('.tile'));
+  const tiles=all.filter(t=>!idxs||idxs.indexOf(+t.dataset.i)>=0); if(!tiles.length) return;
+  const showPool=Core.eligible(S).concat(round.slots.filter(s=>s.num!=null).map(s=>s.num)); const rp=showPool.length?showPool:['?'];
+  const finalOf=t=>{ const sl=round.slots[+t.dataset.i]; return sl&&sl.num!=null?sl.num:'—'; };
+  tiles.forEach(t=>t.classList.add('spin'));
+  const st={round:round,tiles:tiles,revealed:new Set(),timers:[]};
+  st.iv=setInterval(()=>{ tiles.forEach(t=>{ if(!st.revealed.has(t)) t.querySelector('.num').textContent=rp[Core.randInt(rp.length)]; }); },55);
+  const stagger=Math.min(160,1600/tiles.length);
+  function reveal(t){ if(anim!==st||st.revealed.has(t)) return; st.revealed.add(t); t.classList.remove('spin'); t.classList.add('pop'); t.querySelector('.num').textContent=finalOf(t); if(st.revealed.size>=tiles.length) finish(); }
+  function finish(){ clearInterval(st.iv); st.timers.forEach(clearTimeout); anim=null; renderDraw(); if(onDone) onDone(); else afterRound(round); }
+  st.skip=()=>{ tiles.forEach(t=>{ if(!st.revealed.has(t)){ st.revealed.add(t); t.classList.remove('spin'); t.querySelector('.num').textContent=finalOf(t); } }); finish(); };
+  tiles.forEach((t,i)=>st.timers.push(setTimeout(()=>reveal(t),(baseDelay||1000)+i*stagger)));
+  anim=st; renderControls();
+}
+function skipAnim(){ if(anim) anim.skip(); }
+function afterRound(round){ const g=Core.groupById(S,round.groupId); if(g&&Core.groupRemaining(S,g)===0) toast(Core.totalRemaining(S)===0?'全部獎項抽完 🎉':'「'+Core.label(g)+'」已抽完，按 Enter 進入下一組','good',4000); }
+async function forfeitSlot(roundId,idx,tileEl){
+  const r=S.rounds.find(x=>x.id===roundId); if(!r) return; const sl=r.slots[idx]; if(!sl||sl.status!=='win') return;
+  const num=sl.num;
+  if(tileEl) tileEl.classList.add('sel');
+  const ok=await ask({title:num+' 號不在場？',body:'確定後立刻補抽 1 個新號碼。\n'+num+' 號記為棄權，之後不會再被抽到；同輪其他號碼不變，剩餘獎項數不變。',ok:'棄權並補抽'});
+  if(tileEl) tileEl.classList.remove('sel');
+  if(!ok) return;
+  const res=Core.forfeit(S,roundId,idx); save();
+  const result=()=>{ if(panelOpen()) renderPanel(); toast(num+' 號棄權　→　補抽 '+(res.num==null?'（已無人可補）':res.num+' 號'),'good',4500); };
+  const lr=lastRound();
+  if(lr&&lr.id===roundId&&!poolView&&res.num!=null){ renderHeader(); renderSide(); renderStage(); toast(num+' 號棄權，補抽中…','',1500); startAnim(lr,[idx],1300,result); }
+  else { renderDraw(); result(); }
+}
+async function doUndo(){
+  if(anim) return; const r=lastRound(); if(!r) return;
+  const ok=await ask({title:'撤銷第 '+r.id+' 輪？',body:'只在操作失誤時使用，例如數量打錯。\n這一輪的 '+r.n+' 個號碼（含棄權的）會全部回到號碼池，這一輪的獎項退回。',ok:'撤銷這一輪',danger:true});
+  if(!ok) return;
+  Core.undoLast(S); if(Core.groupById(S,r.groupId)) S.currentGroupId=r.groupId; poolView=false; save(); renderDraw(); if(panelOpen()) renderPanel(); toast('已撤銷第 '+r.id+' 輪','warn');
+}
+/* ---------- 加獎 ---------- */
+function addOpen(){ return !$('addModal').classList.contains('hidden'); }
+function openAdd(){
+  if(anim||modalRes) return;
+  const sel=$('agTarget'); sel.innerHTML='';
+  S.groups.forEach(g=>{ const o=document.createElement('option'); o.value=g.id; o.textContent=Core.label(g)+'（剩 '+Core.groupRemaining(S,g)+'/'+g.count+'）'; sel.appendChild(o); });
+  const on=document.createElement('option'); on.value=''; on.textContent='＋ 新增一組'; sel.appendChild(on);
+  sel.value=S.currentGroupId&&Core.groupById(S,S.currentGroupId)?S.currentGroupId:'';
+  $('agName').value=''; $('agAmt').value=''; $('agCount').value=1;
+  updateAddForm(); $('addModal').classList.remove('hidden'); setTimeout(()=>$('agCount').focus(),0);
+}
+function updateAddForm(){
+  const isNew=$('agTarget').value===''; $('agNewRow').classList.toggle('hidden',!isNew);
+  const n=parseInt($('agCount').value,10)||0,el=Core.eligible(S).length,remAfter=Core.totalRemaining(S)+n;
+  $('agInfo').textContent='可抽號碼 '+el+' 個，加完後全場還剩 '+remAfter+' 份'+(el<remAfter?'　⚠ 號碼會不夠':'');
+  $('agInfo').className='info '+(el<remAfter?'warn':'');
+}
+function closeAdd(){ $('addModal').classList.add('hidden'); }
+function confirmAdd(){
+  const gid=$('agTarget').value,n=parseInt($('agCount').value,10);
+  const res=Core.addPrizes(S,gid?{groupId:gid,count:n}:{name:$('agName').value,amount:$('agAmt').value,count:n,afterId:S.currentGroupId});
+  if(!res.ok){ toast(res.msg,'warn'); return; }
+  closeAdd();
+  const g=res.group,cur=curGroup();
+  if(res.isNew&&(!cur||Core.groupRemaining(S,cur)===0)) S.currentGroupId=g.id;
+  const cg=curGroup(),crem=cg?Core.groupRemaining(S,cg):0; if(crem>0&&parseInt($('countIn').value,10)>crem) $('countIn').value=crem;
+  save(); renderDraw(); if(panelOpen()) renderPanel();
+  toast((res.isNew?'新增「'+Core.label(g)+'」'+n+' 份':'「'+Core.label(g)+'」加 '+n+' 份，本組還剩 '+Core.groupRemaining(S,g))+(res.isNew&&S.currentGroupId!==g.id?'，本組抽完後接著抽':''),'good',4500);
+}
+$('addBtn').onclick=openAdd;
+$('agTarget').onchange=updateAddForm; $('agCount').oninput=updateAddForm;
+$('agOk').onclick=confirmAdd; $('agCancel').onclick=closeAdd;
+$('addModal').addEventListener('click',e=>{ if(e.target===$('addModal')) closeAdd(); });
+$('drawBtn').onclick=()=>{ primaryAction(); $('drawBtn').blur(); };
+$('skipBtn').onclick=skipAnim;
+$('undoBtn').onclick=doUndo;
+$('poolBtn').onclick=()=>{ if(anim) return; poolView=!poolView; renderStage(); renderControls(); };
+$('sideBtn').onclick=()=>{ S.showSide=S.showSide===false; save(); renderSide(); renderControls(); refit(); };
+$('groupSel').onchange=e=>{ S.currentGroupId=e.target.value; const g=curGroup(),rem=g?Core.groupRemaining(S,g):0; if(rem>0&&parseInt($('countIn').value,10)>rem) $('countIn').value=rem; save(); renderDraw(); };
+$('countIn').onchange=e=>{ let v=parseInt(e.target.value,10); if(isNaN(v)||v<1) v=1; if(v>25) v=25; e.target.value=v; renderControls(); };
+$('countIn').oninput=()=>renderControls();
+$('setupBtn').onclick=()=>{ if(anim) skipAnim(); closePanel(); show('setup'); };
+$('fsBtn').onclick=()=>{ const d=document.documentElement; if(document.fullscreenElement){ document.exitFullscreen&&document.exitFullscreen(); } else if(d.requestFullscreen){ d.requestFullscreen().catch(()=>{}); } };
+
+/* ---------- 清單面板 ---------- */
+function openPanel(){ renderPanel(); $('panel').classList.add('open'); }
+function closePanel(){ $('panel').classList.remove('open'); }
+function panelOpen(){ return $('panel').classList.contains('open'); }
+function renderPanel(){
+  $('statGroups').innerHTML=S.groups.map(g=>'<div class="stat"><span>'+esc(Core.label(g))+'</span><span>'+Core.groupWins(S,g.id)+' / '+g.count+(g.added?'（現場'+(g.isNew?'新增':'加 '+g.added+' 份')+'）':'')+'</span></div>').join('');
+  const tb=$('winTable'); tb.innerHTML='';
+  Core.winners(S).forEach(w=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+w.seq+'</td><td>'+esc(w.groupLabel)+'</td><td class="n">'+esc(w.num)+(w.replaced?' <small>補</small>':'')+'</td><td>'+Core.fmtTime(w.time)+'</td><td><button class="sm">棄權補抽</button></td>';
+    tr.querySelector('button').onclick=()=>{ if(anim) return; forfeitSlot(w.roundId,w.slot,null); };
+    tb.appendChild(tr);
+  });
+  const fs=Core.forfeits(S); $('forfList').textContent=fs.length?fs.map(f=>f.num+'（'+f.groupLabel+'，'+Core.fmtTime(f.time)+'）').join('、'):'無';
+  const ad=S.additions||[]; $('addList').textContent=ad.length?ad.map(a=>Core.fmtTime(a.time)+'　'+(a.kind==='new'?'新增':'加')+'「'+a.groupLabel+'」'+a.n+' 份').join('；'):'無';
+  $('copyArea').value=Core.toText(S);
+}
+$('listBtn').onclick=()=>{ if(panelOpen()) closePanel(); else openPanel(); };
+function helpOpen(){ return !$('help').classList.contains('hidden'); }
+$('helpBtn').onclick=$('helpBtn2').onclick=()=>{ $('help').classList.remove('hidden'); $('help').scrollTop=0; };
+$('helpClose').onclick=()=>$('help').classList.add('hidden');
+$('panelClose').onclick=closePanel;
+$('csvBtn').onclick=()=>download('CSMMT2026-摸彩結果-'+stamp()+'.csv',Core.toCSV(S),'text/csv;charset=utf-8');
+$('forfCsvBtn').onclick=()=>download('CSMMT2026-棄權名單-'+stamp()+'.csv',Core.forfeitCSV(S),'text/csv;charset=utf-8');
+$('bakBtn').onclick=()=>download('CSMMT2026-摸彩備份-'+stamp()+'.json',JSON.stringify(S,null,1),'application/json');
+$('copyBtn').onclick=async()=>{ const t=Core.toText(S); $('copyArea').value=t; try{ await navigator.clipboard.writeText(t); toast('已複製到剪貼簿','good'); }catch(e){ $('copyArea').focus(); $('copyArea').select(); toast('請按 Ctrl+C 複製','warn'); } };
+$('impBtn').onclick=$('impBtn2').onclick=()=>$('impInput').click();
+$('impInput').onchange=e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return; const rd=new FileReader();
+  rd.onload=async()=>{ let o; try{ o=JSON.parse(rd.result); if(!o||o.version!==1||!Array.isArray(o.rounds)||!Array.isArray(o.groups)) throw 0; }catch(err){ toast('這不是有效的備份檔','warn'); return; }
+    const w=Core.winners(o).length;
+    if(!(await ask({title:'匯入備份「'+f.name+'」？',body:'這台電腦目前的設定與結果會被取代。\n備份內有 '+o.rounds.length+' 輪、'+w+' 個得獎號碼。',ok:'匯入'}))) return;
+    S=Object.assign(Core.newState(),o); poolView=false; save(); closePanel(); show(S.ready?'draw':'setup'); toast('已匯入備份','good'); };
+  rd.readAsText(f); };
+
+/* ---------- 鍵盤 ---------- */
+document.addEventListener('keydown',e=>{
+  if(modalRes){ if(e.key==='Enter'){ e.preventDefault(); closeModal(true); } else if(e.key==='Escape'){ e.preventDefault(); closeModal(false); } return; }
+  if(addOpen()){ if(e.key==='Enter'){ e.preventDefault(); confirmAdd(); } else if(e.key==='Escape'){ e.preventDefault(); closeAdd(); } return; }
+  if(helpOpen()){ if(e.key==='Escape'){ e.preventDefault(); $('help').classList.add('hidden'); } return; }
+  if(!$('draw').classList.contains('active')) return;
+  const tag=(e.target.tagName||'').toLowerCase();
+  if(e.key==='Escape'){ if(anim) skipAnim(); else if(panelOpen()) closePanel(); else if(poolView){ poolView=false; renderStage(); renderControls(); } return; }
+  if(panelOpen()) return;
+  if(e.key==='Enter'){ if(tag==='textarea') return; e.preventDefault(); if(anim) skipAnim(); else primaryAction(); return; }
+  if(e.key===' '&&anim){ e.preventDefault(); skipAnim(); }
+});
+
+/* ---------- 啟動 ---------- */
+load();
+show(S.ready?'draw':'setup');
+})();
+</script>
+</body>
+</html>
